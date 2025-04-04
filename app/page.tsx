@@ -2,21 +2,24 @@
 
 import { WalletConnect } from '@/components/wallet-connect'
 import { useWalletContext } from '@/components/wallet-provider'
-import { RoomCreator } from '@/components/room-creator'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Copy, Check } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function Home() {
   const { account } = useWalletContext()
+  const router = useRouter()
   const [roomId, setRoomId] = useState('')
   const [participant, setParticipant] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [token, setToken] = useState('')
   const [copied, setCopied] = useState(false)
+  const [joinRoomId, setJoinRoomId] = useState('')
+  const [joinToken, setJoinToken] = useState('')
 
   const handleCreateRoom = async () => {
     setIsLoading(true)
@@ -48,6 +51,11 @@ export default function Home() {
     navigator.clipboard.writeText(token)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleJoinRoom = () => {
+    if (!joinRoomId.trim() || !joinToken.trim()) return
+    router.push(`/room/${joinRoomId}?token=${joinToken}`)
   }
 
   return (
@@ -128,6 +136,44 @@ export default function Home() {
                     {isLoading ? 'Creating...' : 'Create Room'}
                   </Button>
                 )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Join Room</CardTitle>
+                <CardDescription>Join an existing video conference room</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="joinRoomId" className="text-sm font-medium">
+                    Room ID
+                  </label>
+                  <Input
+                    id="joinRoomId"
+                    placeholder="Enter room ID"
+                    value={joinRoomId}
+                    onChange={(e) => setJoinRoomId(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="joinToken" className="text-sm font-medium">
+                    Token
+                  </label>
+                  <Input
+                    id="joinToken"
+                    placeholder="Enter room token"
+                    value={joinToken}
+                    onChange={(e) => setJoinToken(e.target.value)}
+                  />
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={handleJoinRoom}
+                  disabled={!joinRoomId.trim() || !joinToken.trim()}
+                >
+                  Join Room
+                </Button>
               </CardContent>
             </Card>
           </div>
