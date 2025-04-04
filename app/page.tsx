@@ -67,7 +67,7 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center p-24">
       <div className="w-full max-w-lg space-y-8">
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Aptos Video Conference</h1>
+          <h1 className="text-3xl font-bold">ChatApt</h1>
           <p className="text-gray-500">Connect your wallet to create or join a video conference</p>
         </div>
 

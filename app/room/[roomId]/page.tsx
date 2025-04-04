@@ -182,7 +182,7 @@ export default function RoomPage({ params }: RoomPageProps) {
   return (
     <div className="flex flex-col min-h-screen" onClick={handleUserInteraction}>
       <header className="p-4 border-b">
-        <h1 className="text-2xl font-bold">Room: {roomId}</h1>
+        <h1 className="text-2xl font-bold">ChatApt - Room: {roomId}</h1>
       </header>
 
       <main className="flex-1 p-4">

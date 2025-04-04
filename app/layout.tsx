@@ -3,8 +3,8 @@ import './globals.css'
 import { WalletProvider } from '@/components/wallet-provider'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'ChatApt',
+  description: 'Aptos Video Conference',
   generator: 'v0.dev',
 }
 
