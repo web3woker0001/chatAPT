@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
+import Image from 'next/image'
 import { LiveKitRoom, VideoConference, useTracks, useLocalParticipant } from '@livekit/components-react'
 import '@livekit/components-styles'
 import { Button } from '@/components/ui/button'
@@ -104,6 +105,11 @@ export default function RoomPage({ params }: RoomPageProps) {
   const [error, setError] = useState<string | null>(null)
   const [isAudioEnabled, setIsAudioEnabled] = useState(false)
   const [audioPermissionGranted, setAudioPermissionGranted] = useState(false)
+  const router = useRouter()
+
+  const handleLeave = () => {
+    router.push('/')
+  }
 
   useEffect(() => {
     // 检查麦克风权限
@@ -181,8 +187,32 @@ export default function RoomPage({ params }: RoomPageProps) {
 
   return (
     <div className="flex flex-col min-h-screen" onClick={handleUserInteraction}>
-      <header className="p-4 border-b">
-        <h1 className="text-2xl font-bold">ChatApt - Room: {roomId}</h1>
+      <header className="p-4 border-b bg-white">
+        <div className="container mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Image
+              src="/placeholder-logo.png"
+              alt="ChatApt Logo"
+              width={40}
+              height={40}
+              className="rounded-md"
+            />
+            <h1 className="text-2xl font-bold">Room: {roomId}</h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            {isConnected && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLeave}
+                className="flex items-center space-x-2"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Leave Room</span>
+              </Button>
+            )}
+          </div>
+        </div>
       </header>
 
       <main className="flex-1 p-4">
