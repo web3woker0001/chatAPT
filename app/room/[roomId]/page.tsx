@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
-import { LiveKitRoom, VideoConference, useTracks } from '@livekit/components-react'
+import { LiveKitRoom, VideoConference, useTracks, useLocalParticipant } from '@livekit/components-react'
 import '@livekit/components-styles'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -19,38 +19,27 @@ interface RoomPageProps {
 }
 
 function RoomContent() {
-  const [isAudioEnabled, setIsAudioEnabled] = useState(false)
-  const [isVideoEnabled, setIsVideoEnabled] = useState(false)
-
-  const tracks = useTracks([Track.Source.Microphone, Track.Source.Camera])
-
-  useEffect(() => {
-    const audioTrack = tracks.find(track => track.source === Track.Source.Microphone)
-    const videoTrack = tracks.find(track => track.source === Track.Source.Camera)
-
-    setIsAudioEnabled(!!audioTrack?.isEnabled)
-    setIsVideoEnabled(!!videoTrack?.isEnabled)
-  }, [tracks])
+  const { isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant()
 
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex items-center justify-between p-4 bg-gray-100">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            {isAudioEnabled ? (
+            {isMicrophoneEnabled ? (
               <Mic className="h-5 w-5 text-green-500" />
             ) : (
               <MicOff className="h-5 w-5 text-red-500" />
             )}
-            <span className="text-sm">{isAudioEnabled ? 'Audio On' : 'Audio Off'}</span>
+            <span className="text-sm">{isMicrophoneEnabled ? 'Audio On' : 'Audio Off'}</span>
           </div>
           <div className="flex items-center space-x-2">
-            {isVideoEnabled ? (
+            {isCameraEnabled ? (
               <Video className="h-5 w-5 text-green-500" />
             ) : (
               <VideoOff className="h-5 w-5 text-red-500" />
             )}
-            <span className="text-sm">{isVideoEnabled ? 'Video On' : 'Video Off'}</span>
+            <span className="text-sm">{isCameraEnabled ? 'Video On' : 'Video Off'}</span>
           </div>
         </div>
       </div>
