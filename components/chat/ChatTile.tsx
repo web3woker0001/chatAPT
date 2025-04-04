@@ -42,9 +42,10 @@ export function ChatTile({ messages, accentColor, onSend }: ChatTileProps) {
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted'
                 }`}
+                style={msg.isSelf ? { backgroundColor: accentColor } : undefined}
               >
                 <div className="text-sm font-semibold mb-1">{msg.name}</div>
-                <div className="text-sm">{msg.message}</div>
+                <div className="text-sm break-words">{msg.message}</div>
                 <div className="text-xs opacity-70 mt-1">
                   {new Date(msg.timestamp).toLocaleTimeString()}
                 </div>
@@ -60,6 +61,7 @@ export function ChatTile({ messages, accentColor, onSend }: ChatTileProps) {
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Type a message..."
+            className="flex-1"
           />
           <Button onClick={handleSend} size="icon">
             <Send className="h-4 w-4" />

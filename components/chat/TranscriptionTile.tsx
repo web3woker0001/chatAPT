@@ -4,6 +4,8 @@ import {
   useChat,
   useLocalParticipant,
   useTrackTranscription,
+  useRemoteParticipants,
+  useTracks,
 } from "@livekit/components-react";
 import {
   LocalParticipant,
@@ -11,93 +13,126 @@ import {
   Track,
   TranscriptionSegment,
 } from "livekit-client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+// 创建一个单独的组件来处理远程转录
+function RemoteParticipantTranscription({
+  track,
+  onTranscription,
+}: {
+  track: TrackReferenceOrPlaceholder;
+  onTranscription: (segments: TranscriptionSegment[], participant: Participant) => void;
+}) {
+  const transcription = useTrackTranscription(track);
+
+  useEffect(() => {
+    if (transcription.segments.length > 0) {
+      onTranscription(transcription.segments, track.participant);
+    }
+  }, [transcription.segments, track.participant, onTranscription]);
+
+  return null;
+}
 
 export function TranscriptionTile({
-  agentAudioTrack,
   accentColor,
 }: {
-  agentAudioTrack?: TrackReferenceOrPlaceholder;
   accentColor: string;
 }) {
-  const agentMessages = useTrackTranscription(agentAudioTrack || undefined);
   const localParticipant = useLocalParticipant();
+  const remoteParticipants = useRemoteParticipants();
+  const remoteTracks = useTracks(remoteParticipants).filter(
+    track => track.source === Track.Source.Microphone
+  );
+
+  // 本地参与者的转录
   const localMessages = useTrackTranscription({
     publication: localParticipant.microphoneTrack,
     source: Track.Source.Microphone,
     participant: localParticipant.localParticipant,
   });
 
-  const [transcripts, setTranscripts] = useState<Map<string, ChatMessageType>>(
-    new Map()
-  );
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const { chatMessages, send: sendChat } = useChat();
+  const transcriptsRef = useRef(new Map<string, ChatMessageType>());
 
-  // store transcripts
-  useEffect(() => {
-    if (agentAudioTrack) {
-      agentMessages.segments.forEach((s) =>
-        transcripts.set(
-          s.id,
-          segmentToChatMessage(
-            s,
-            transcripts.get(s.id),
-            agentAudioTrack.participant
-          )
-        )
-      );
-    }
-    
-    localMessages.segments.forEach((s) =>
-      transcripts.set(
+  // 处理远程转录的回调
+  const handleRemoteTranscription = useCallback((segments: TranscriptionSegment[], participant: Participant) => {
+    const newTranscripts = new Map(transcriptsRef.current);
+    segments.forEach((s) =>
+      newTranscripts.set(
         s.id,
-        segmentToChatMessage(
-          s,
-          transcripts.get(s.id),
-          localParticipant.localParticipant
-        )
+        segmentToChatMessage(s, newTranscripts.get(s.id), participant)
       )
     );
+    transcriptsRef.current = newTranscripts;
+    updateMessages();
+  }, []);
 
-    const allMessages = Array.from(transcripts.values());
-    for (const msg of chatMessages) {
-      const isAgent = agentAudioTrack
-        ? msg.from?.identity === agentAudioTrack.participant?.identity
-        : msg.from?.identity !== localParticipant.localParticipant.identity;
-      const isSelf =
-        msg.from?.identity === localParticipant.localParticipant.identity;
+  // 更新消息的函数
+  const updateMessages = useCallback(() => {
+    const allMessages = Array.from(transcriptsRef.current.values());
+    
+    // 添加聊天消息
+    chatMessages.forEach(msg => {
+      const isSelf = msg.from?.identity === localParticipant.localParticipant.identity;
       let name = msg.from?.name;
       if (!name) {
-        if (isAgent) {
-          name = "Agent";
-        } else if (isSelf) {
-          name = "You";
+        if (isSelf) {
+          name = localParticipant.localParticipant.name || "You";
         } else {
-          name = "Unknown";
+          const participant = remoteParticipants.find(
+            p => p.identity === msg.from?.identity
+          );
+          name = participant?.name || "Unknown";
         }
       }
       allMessages.push({
         name,
         message: msg.message,
         timestamp: msg.timestamp,
-        isSelf: isSelf,
+        isSelf,
       });
-    }
+    });
+
+    // 排序并更新状态
     allMessages.sort((a, b) => a.timestamp - b.timestamp);
     setMessages(allMessages);
-  }, [
-    transcripts,
-    chatMessages,
-    localParticipant.localParticipant,
-    agentAudioTrack?.participant,
-    agentMessages.segments,
-    localMessages.segments,
-    agentAudioTrack,
-  ]);
+  }, [chatMessages, localParticipant.localParticipant, remoteParticipants]);
+
+  // 处理本地转录
+  useEffect(() => {
+    const newTranscripts = new Map(transcriptsRef.current);
+    localMessages.segments.forEach((s) =>
+      newTranscripts.set(
+        s.id,
+        segmentToChatMessage(
+          s,
+          newTranscripts.get(s.id),
+          localParticipant.localParticipant
+        )
+      )
+    );
+    transcriptsRef.current = newTranscripts;
+    updateMessages();
+  }, [localMessages.segments, localParticipant.localParticipant, updateMessages]);
+
+  // 处理聊天消息更新
+  useEffect(() => {
+    updateMessages();
+  }, [updateMessages]);
 
   return (
-    <ChatTile messages={messages} accentColor={accentColor} onSend={sendChat} />
+    <>
+      {remoteTracks.map((track) => (
+        <RemoteParticipantTranscription
+          key={track.sid}
+          track={track}
+          onTranscription={handleRemoteTranscription}
+        />
+      ))}
+      <ChatTile messages={messages} accentColor={accentColor} onSend={sendChat} />
+    </>
   );
 }
 
@@ -108,7 +143,7 @@ function segmentToChatMessage(
 ): ChatMessageType {
   const msg: ChatMessageType = {
     message: s.final ? s.text : `${s.text} ...`,
-    name: participant instanceof LocalParticipant ? "You" : "Agent",
+    name: participant.name || participant.identity || (participant instanceof LocalParticipant ? "You" : "Unknown"),
     isSelf: participant instanceof LocalParticipant,
     timestamp: existingMessage?.timestamp ?? Date.now(),
   };
