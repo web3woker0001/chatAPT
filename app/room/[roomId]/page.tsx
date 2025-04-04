@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner'
 import React from 'react'
 import { Track } from 'livekit-client'
-import { Mic, MicOff, Video, VideoOff } from 'lucide-react'
+import { Mic, MicOff, Video, VideoOff, LogOut } from 'lucide-react'
 
 interface RoomPageProps {
   params: Promise<{
@@ -20,6 +20,11 @@ interface RoomPageProps {
 
 function RoomContent() {
   const { isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant()
+  const router = useRouter()
+
+  const handleLeave = () => {
+    router.push('/')
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -42,6 +47,15 @@ function RoomContent() {
             <span className="text-sm">{isCameraEnabled ? 'Video On' : 'Video Off'}</span>
           </div>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleLeave}
+          className="flex items-center space-x-2"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Leave Room</span>
+        </Button>
       </div>
       <VideoConference />
     </div>
