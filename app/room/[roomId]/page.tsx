@@ -18,7 +18,7 @@ interface RoomPageProps {
   }>
 }
 
-function MediaStatus() {
+function RoomContent() {
   const [isAudioEnabled, setIsAudioEnabled] = useState(false)
   const [isVideoEnabled, setIsVideoEnabled] = useState(false)
 
@@ -33,23 +33,28 @@ function MediaStatus() {
   }, [tracks])
 
   return (
-    <div className="flex items-center space-x-4">
-      <div className="flex items-center space-x-2">
-        {isAudioEnabled ? (
-          <Mic className="h-5 w-5 text-green-500" />
-        ) : (
-          <MicOff className="h-5 w-5 text-red-500" />
-        )}
-        <span className="text-sm">{isAudioEnabled ? 'Audio On' : 'Audio Off'}</span>
+    <div className="flex flex-col min-h-screen">
+      <div className="flex items-center justify-between p-4 bg-gray-100">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            {isAudioEnabled ? (
+              <Mic className="h-5 w-5 text-green-500" />
+            ) : (
+              <MicOff className="h-5 w-5 text-red-500" />
+            )}
+            <span className="text-sm">{isAudioEnabled ? 'Audio On' : 'Audio Off'}</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            {isVideoEnabled ? (
+              <Video className="h-5 w-5 text-green-500" />
+            ) : (
+              <VideoOff className="h-5 w-5 text-red-500" />
+            )}
+            <span className="text-sm">{isVideoEnabled ? 'Video On' : 'Video Off'}</span>
+          </div>
+        </div>
       </div>
-      <div className="flex items-center space-x-2">
-        {isVideoEnabled ? (
-          <Video className="h-5 w-5 text-green-500" />
-        ) : (
-          <VideoOff className="h-5 w-5 text-red-500" />
-        )}
-        <span className="text-sm">{isVideoEnabled ? 'Video On' : 'Video Off'}</span>
-      </div>
+      <VideoConference />
     </div>
   )
 }
@@ -119,13 +124,6 @@ export default function RoomPage({ params }: RoomPageProps) {
       </header>
 
       <main className="flex-1 p-4">
-        <div className="flex items-center justify-between p-4 bg-gray-100">
-          <MediaStatus />
-          <div className="text-sm text-gray-500">
-            Room: {roomId}
-          </div>
-        </div>
-
         <LiveKitRoom
           token={token}
           serverUrl={serverUrl}
@@ -151,7 +149,7 @@ export default function RoomPage({ params }: RoomPageProps) {
             toast.error('Failed to connect to room')
           }}
         >
-          <VideoConference />
+          <RoomContent />
         </LiveKitRoom>
 
         {error && (
