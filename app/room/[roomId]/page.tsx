@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import React from 'react'
 import { Track } from 'livekit-client'
 import { Mic, MicOff, Video, VideoOff, LogOut } from 'lucide-react'
+import { TranscriptionTile } from '@/components/chat/TranscriptionTile'
 
 interface RoomPageProps {
   params: Promise<{
@@ -18,9 +19,31 @@ interface RoomPageProps {
   }>
 }
 
-function RoomContent() {
-  const { isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant()
+function RoomContent({ isConnected }: { isConnected: boolean }) {
+  const { isMicrophoneEnabled, isCameraEnabled, localParticipant } = useLocalParticipant()
   const router = useRouter()
+
+  useEffect(() => {
+    // 检查麦克风权限
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        console.log('麦克风权限已获取')
+        stream.getTracks().forEach(track => track.stop())
+      })
+      .catch(err => {
+        console.error('麦克风权限错误:', err)
+      })
+
+    // 检查音频状态
+    if (localParticipant) {
+      console.log('音频状态:', {
+        isMicrophoneEnabled,
+        isConnected,
+        participantIdentity: localParticipant.identity,
+        participantName: localParticipant.name
+      })
+    }
+  }, [localParticipant, isMicrophoneEnabled, isConnected])
 
   const handleLeave = () => {
     router.push('/')
@@ -47,17 +70,26 @@ function RoomContent() {
             <span className="text-sm">{isCameraEnabled ? 'Video On' : 'Video Off'}</span>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleLeave}
-          className="flex items-center space-x-2"
-        >
-          <LogOut className="h-4 w-4" />
-          <span>Leave Room</span>
-        </Button>
+        {isConnected && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLeave}
+            className="flex items-center space-x-2"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Leave Room</span>
+          </Button>
+        )}
       </div>
-      <VideoConference />
+      <div className="flex flex-1">
+        <div className="flex-1">
+          <VideoConference />
+        </div>
+        <div className="w-80 border-l">
+          <TranscriptionTile accentColor="#000000" />
+        </div>
+      </div>
     </div>
   )
 }
@@ -71,6 +103,30 @@ export default function RoomPage({ params }: RoomPageProps) {
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isAudioEnabled, setIsAudioEnabled] = useState(false)
+  const [audioPermissionGranted, setAudioPermissionGranted] = useState(false)
+
+  useEffect(() => {
+    // 检查麦克风权限
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        console.log('麦克风权限已获取')
+        setAudioPermissionGranted(true)
+        stream.getTracks().forEach(track => {
+          console.log('音频轨道信息:', {
+            kind: track.kind,
+            label: track.label,
+            enabled: track.enabled,
+            muted: track.muted,
+            readyState: track.readyState
+          })
+          track.stop()
+        })
+      })
+      .catch(err => {
+        console.error('麦克风权限错误:', err)
+        setAudioPermissionGranted(false)
+      })
+  }, [])
 
   useEffect(() => {
     if (!serverUrl) {
@@ -81,10 +137,13 @@ export default function RoomPage({ params }: RoomPageProps) {
       roomId,
       tokenLength: token?.length,
       serverUrl: serverUrl,
+      isAudioEnabled,
+      audioPermissionGranted
     })
-  }, [roomId, token, serverUrl])
+  }, [roomId, token, serverUrl, isAudioEnabled, audioPermissionGranted])
 
   const handleUserInteraction = () => {
+    console.log('用户交互，启用音频')
     setIsAudioEnabled(true)
   }
 
@@ -152,7 +211,7 @@ export default function RoomPage({ params }: RoomPageProps) {
             toast.error('Failed to connect to room')
           }}
         >
-          <RoomContent />
+          <RoomContent isConnected={isConnected} />
         </LiveKitRoom>
 
         {error && (

@@ -20,6 +20,7 @@ export default function Home() {
   const [copied, setCopied] = useState(false)
   const [joinRoomId, setJoinRoomId] = useState('')
   const [joinToken, setJoinToken] = useState('')
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false)
 
   const handleCreateRoom = async () => {
     setIsLoading(true)
@@ -56,6 +57,10 @@ export default function Home() {
   const handleJoinRoom = () => {
     if (!joinRoomId.trim() || !joinToken.trim()) return
     router.push(`/room/${joinRoomId}?token=${joinToken}`)
+  }
+
+  const handleUserInteraction = () => {
+    setIsAudioEnabled(true)
   }
 
   return (

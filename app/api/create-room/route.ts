@@ -75,7 +75,7 @@ export async function POST(request: Request) {
 
     // Test server connection
     try {
-      const response = await fetch(`http://127.0.0.1:7880/rtc/validate?access_token=${token}`)
+      const response = await fetch(`http://34.70.196.96:3001/rtc/validate?access_token=${token}`)
       console.log('Server validation response:', {
         status: response.status,
         statusText: response.statusText
