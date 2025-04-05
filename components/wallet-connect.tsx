@@ -3,16 +3,23 @@
 import { useWalletContext } from './wallet-provider'
 import { Button } from './ui/button'
 
+// 缩短地址显示
+const shortenAddress = (address: string | null) => {
+  if (!address) return 'Not connected';
+  if (address.length <= 10) return address;
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+};
+
 export function WalletConnect() {
   const { wallets, activeWallet, account, isConnecting, error, connect, disconnect } = useWalletContext()
 
   if (activeWallet && account) {
     return (
-      <div className="flex flex-col gap-4 p-4 border rounded-lg bg-gray-50">
+      <div className="flex flex-col gap-4 p-4 border rounded-lg bg-amber-50 border-amber-200">
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-sm text-gray-500">Connected Wallet</span>
-            <span className="font-medium">
+            <span className="text-sm text-amber-700">Connected Wallet</span>
+            <span className="font-medium text-amber-900">
               {activeWallet.name}
             </span>
           </div>
@@ -20,15 +27,15 @@ export function WalletConnect() {
             variant="destructive"
             onClick={disconnect}
             disabled={isConnecting}
-            className="ml-4"
+            className="ml-4 bg-red-600 hover:bg-red-700"
           >
             Disconnect Wallet
           </Button>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-500">Address:</span>
-          <code className="px-2 py-1 bg-gray-100 rounded">
-            {account.slice(0, 6)}...{account.slice(-4)}
+          <span className="text-amber-700">Address:</span>
+          <code className="px-2 py-1 bg-amber-100 rounded text-amber-900">
+            {shortenAddress(account)}
           </code>
         </div>
       </div>
@@ -37,8 +44,8 @@ export function WalletConnect() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="p-4 border rounded-lg">
-        <h2 className="text-lg font-semibold mb-4">Connect Wallet</h2>
+      <div className="p-4 border rounded-lg bg-amber-50 border-amber-200">
+        <h2 className="text-lg font-semibold mb-4 text-amber-900">Connect Wallet</h2>
         <div className="flex flex-wrap gap-2">
           {wallets.length > 0 ? (
             wallets.map((wallet) => (
@@ -46,7 +53,7 @@ export function WalletConnect() {
                 key={wallet.name}
                 onClick={() => connect(wallet)}
                 disabled={isConnecting}
-                className="flex items-center gap-2 min-w-[200px] justify-center"
+                className="flex items-center gap-2 min-w-[200px] justify-center bg-amber-600 hover:bg-amber-700"
               >
                 {wallet.icon && (
                   <img
@@ -59,15 +66,15 @@ export function WalletConnect() {
               </Button>
             ))
           ) : (
-            <div className="text-center w-full p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-500 mb-2">
+            <div className="text-center w-full p-4 bg-amber-100 rounded-lg">
+              <p className="text-sm text-amber-700 mb-2">
                 No Aptos wallets detected
               </p>
               <a
                 href="https://petra.app"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-500 hover:text-blue-600 text-sm"
+                className="text-amber-900 hover:text-amber-950 text-sm font-medium"
               >
                 Install Petra Wallet →
               </a>
@@ -76,8 +83,8 @@ export function WalletConnect() {
         </div>
       </div>
       {error && (
-        <div className="p-4 bg-red-50 rounded-lg">
-          <p className="text-sm text-red-500">{error}</p>
+        <div className="p-4 bg-red-100 rounded-lg">
+          <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
     </div>

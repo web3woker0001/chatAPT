@@ -3,9 +3,9 @@ import './globals.css'
 import { WalletProvider } from '@/components/wallet-provider'
 
 export const metadata: Metadata = {
-  title: 'ChatApt',
+  title: 'chatAPT',
   description: 'Aptos Video Conference',
-  generator: 'v0.dev',
+  generator: 'chatAPT',
 }
 
 export default function RootLayout({

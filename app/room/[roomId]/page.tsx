@@ -200,85 +200,76 @@ export default function RoomPage({ params }: RoomPageProps) {
     setIsAudioEnabled(true)
   }
 
-  if (!token) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card>
-          <CardHeader>
-            <CardTitle>Error</CardTitle>
-            <CardDescription>Missing token parameter</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-red-500">Please join the room with a valid token.</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  // 使用 useEffect 来处理客户端特定的逻辑，避免水合错误
+  const [isClient, setIsClient] = useState(false)
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   if (!serverUrl) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Card>
+        <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Error</CardTitle>
-            <CardDescription>Server configuration error</CardDescription>
+            <CardDescription>LiveKit server URL is not configured</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-red-500">LiveKit server URL is not configured.</p>
+            <Button onClick={handleLeave}>Return to Home</Button>
           </CardContent>
         </Card>
       </div>
     )
   }
 
-  if (!isSecureContext) {
+  if (!token) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Card>
+        <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Security Warning</CardTitle>
-            <CardDescription>Secure Context Required</CardDescription>
+            <CardTitle>Error</CardTitle>
+            <CardDescription>Room token is missing</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-red-500">
-              This application requires a secure context (HTTPS or localhost) to access media devices.
-              Please access the application using HTTPS or localhost.
-            </p>
+            <Button onClick={handleLeave}>Return to Home</Button>
           </CardContent>
         </Card>
       </div>
     )
   }
 
+  // 在客户端渲染 LiveKit 组件，避免水合错误
   return (
-    <div onClick={handleUserInteraction} className="min-h-screen">
-      <LiveKitRoom
-        token={token}
-        serverUrl={serverUrl}
-        connect={true}
-        audio={isAudioEnabled}
-        onConnected={() => {
-          console.log('Connected to LiveKit room')
-          setIsConnected(true)
-        }}
-        onDisconnected={() => {
-          console.log('Disconnected from LiveKit room')
-          setIsConnected(false)
-        }}
-        onError={(error) => {
-          console.error('LiveKit error:', {
-            error,
-            roomId,
-            tokenLength: token.length,
-            serverUrl,
-            isSecureContext
-          })
-          setError('Failed to connect to LiveKit room')
-        }}
-      >
-        <RoomContent isConnected={isConnected} />
-      </LiveKitRoom>
+    <div 
+      onClick={handleUserInteraction}
+      className="min-h-screen"
+    >
+      {isClient ? (
+        <LiveKitRoom
+          serverUrl={serverUrl}
+          token={token}
+          onConnected={() => setIsConnected(true)}
+          onDisconnected={() => setIsConnected(false)}
+          onError={(err) => {
+            console.error('LiveKit error:', err)
+            setError(err.message)
+          }}
+        >
+          <RoomContent isConnected={isConnected} />
+        </LiveKitRoom>
+      ) : (
+        <div className="flex items-center justify-center min-h-screen">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Loading...</CardTitle>
+              <CardDescription>Connecting to room...</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={handleLeave}>Return to Home</Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 } 
